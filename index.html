@@ -1,9 +1,29 @@
+<!--
+  Scient E-Library Validator - Vercel-ready static deploy
+  Place this file as /index.html in your project root.
+
+  Also create vercel.json in the project root with the following content:
+  {
+    "rewrites": [ { "source": "/(.*)", "destination": "/index.html" } ]
+  }
+
+  Deployment steps:
+  1) npm i -g vercel
+  2) vercel login
+  3) vercel --prod
+  4) When prompted, confirm project name (e.g. scient-e-library-validator) and deploy.
+
+  Notes:
+  - The page uses MSG91 Verify Widget (dynamic load) and will work on Vercel domain (not localhost).
+  - Replace widgetId and tokenAuth before deploy if you rotate credentials.
+-->
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Scient E-Library — Phone OTP</title>
+<title>Scient E-Library — Phone OTP Validator</title>
 
 <style>
 :root{font-family:Inter,system-ui}
@@ -27,9 +47,7 @@ input{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px}
   animation: spin 0.7s linear infinite;
   margin: 20px auto;
 }
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 </head>
@@ -39,7 +57,7 @@ input{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px}
 <div class="card">
   <h1>Phone Verification — Scient E-Library</h1>
 
-  <!-- Phone Stage -->
+  <!-- Phone Input Stage -->
   <div id="stage-phone">
     <label>Phone Number</label>
     <input id="phone" type="tel" placeholder="+91..." />
@@ -61,7 +79,6 @@ input{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px}
     <div class="loader"></div>
     <p style="text-align:center;font-size:14px">Verifying… Redirecting…</p>
   </div>
-
 </div>
 
 <script>
@@ -89,6 +106,21 @@ var configuration = {
   }
 };
 
+// Single-init guard
+var widgetLoaded = false;
+
+function loadAndInitWidget(){
+  if(widgetLoaded) return;
+  widgetLoaded = true;
+
+  const s = document.createElement("script");
+  s.src = "https://verify.msg91.com/otp-provider.js";
+  s.onload = () => {
+    try{ initSendOTP(configuration); }catch(e){ console.error(e); }
+  };
+  document.body.appendChild(s);
+}
+
 document.getElementById("sendBtn").onclick = () => {
   const phone = document.getElementById("phone").value.trim();
 
@@ -102,16 +134,16 @@ document.getElementById("sendBtn").onclick = () => {
   document.getElementById("stage-phone").classList.add("hidden");
   document.getElementById("stage-otp").classList.remove("hidden");
 
-  initSendOTP(configuration);
+  loadAndInitWidget();
 };
 
 document.getElementById("backBtn").onclick = () => {
   document.getElementById("stage-otp").classList.add("hidden");
   document.getElementById("stage-phone").classList.remove("hidden");
+  document.getElementById("otp-box").innerHTML = ""; // clear widget container
+  widgetLoaded = false;
 };
 </script>
-
-<script src="https://verify.msg91.com/otp-provider.js"></script>
 
 </body>
 </html>
